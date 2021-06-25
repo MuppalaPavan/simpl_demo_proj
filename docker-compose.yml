@@ -1,0 +1,42 @@
+version: "3"
+
+services:
+  app:
+    build: .
+    container_name: bed-dev-server
+    restart: always
+    ports:
+      - "8000:8000"
+    command:
+#      "gunicorn --workers=2 --bind=0.0.0.0:8000 honeybees_bed.wsgi:application"
+      "daphne -b 0.0.0.0 -p 8000 honeybees_bed.routing:application"
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:latest
+    container_name: webserver-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+  db:
+    image: "sqlite3:latest"
+    container_name: "sqlite3"
+    environment:
+      - SQLITE3_DB=sqlite3
+      - SQLITE3_USER=sqlite3
+      - SQLITE3_PASSWORD=sqlite3
+    ports:
+      - "5432:5432"
+    volumes:
+      - sqlite3data:/var/lib/sqlite3/data
+
+volumes:
+  sqlite3data:
